@@ -16,13 +16,13 @@ from fuzzywuzzy import fuzz
 #reading public csv from google drive
 # df from google drive
 #url='https://drive.google.com/file/d/1UnaqvjzaCG2K-wZiy_f4-0nUc85DKtMq/view?usp=sharing'  #Taigi_songs_21000_urls_1_1000.csv
-#url='https://drive.google.com/file/d/1Uu2Y-XU5lCjP3VJ9bt56yBwUGkhEEDH6/view?usp=sharing'  #Taigi_songs_21000_urls.csv
+url='https://drive.google.com/file/d/1Uu2Y-XU5lCjP3VJ9bt56yBwUGkhEEDH6/view?usp=sharing'  #Taigi_songs_21000_urls.csv
 
-#file_id=url.split('/')[-2]
-#dwn_url = 'https://drive.google.com/uc?id=' + file_id
+file_id=url.split('/')[-2]
+dwn_url = 'https://drive.google.com/uc?id=' + file_id
 
 #df from local
-dwn_url = '/home/martin/TG/scraping/Taigi_Songs_21000/Taigi_songs_21000_urls_clean.csv'
+#dwn_url = '/home/martin/TG/scraping/Taigi_Songs_21000/Taigi_songs_21000_urls_clean.csv'
 
 df = pd.read_csv(dwn_url)
 #print(df.head(3))
