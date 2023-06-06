@@ -439,6 +439,7 @@ with st.sidebar:
 # Set up the Streamlit app layout
 st.title("揣台語歌 ／ Chhōe Tâi-gí koa")
 #st.subheader("")
+st.write("Ùi chia 拍字。。。")
    
 #Add a button to start a new chat
 #st.sidebar.button("Koh 揣看覓", on_click = clear_search, type='primary')
