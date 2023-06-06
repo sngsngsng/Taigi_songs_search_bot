@@ -335,7 +335,7 @@ def get_text():
     """
     input_text = st.text_input("", st.session_state["input"], key="input", 
                             # Place holder of input area   
-                            placeholder="共我揣洪榮宏ê莫傷阮的心 / 我欲愛3條董事長ê歌 /  拍 'help' 看 koh 較 chē 說明" , 
+                            placeholder="予我洪榮宏ê莫傷阮的心 / 我欲愛3條董事長ê歌 /  拍 'help' 看 koh 較 chē 說明" , 
                             on_change=clear_text,    
                             label_visibility='hidden')
     input_text = st.session_state["temp"]
@@ -439,7 +439,7 @@ with st.sidebar:
 # Set up the Streamlit app layout
 st.title("揣台語歌 ／ Chhōe Tâi-gí koa")
 #st.subheader("")
-st.write("Ùi chia 拍字。。。")
+st.write("Ùi chia 拍字↓↓↓")
    
 #Add a button to start a new chat
 #st.sidebar.button("Koh 揣看覓", on_click = clear_search, type='primary')
