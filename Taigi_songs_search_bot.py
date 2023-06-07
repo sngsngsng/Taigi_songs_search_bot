@@ -1,7 +1,6 @@
 """
 This is a Streamlit with Python script to search Taigi songs from dataframe. 
 """
-
 # Import necessary libraries
 import streamlit as st
 #from PIL import Image
@@ -14,7 +13,6 @@ from fuzzywuzzy import fuzz
 ############################################################################################
 
 #reading public csv from google drive
-# df from google drive
 #url='https://drive.google.com/file/d/1UnaqvjzaCG2K-wZiy_f4-0nUc85DKtMq/view?usp=sharing'  #Taigi_songs_21000_urls_1_1000.csv
 url='https://drive.google.com/file/d/1Uu2Y-XU5lCjP3VJ9bt56yBwUGkhEEDH6/view?usp=sharing'  #Taigi_songs_21000_urls.csv
 
@@ -22,7 +20,7 @@ file_id=url.split('/')[-2]
 dwn_url = 'https://drive.google.com/uc?id=' + file_id
 
 #df from local
-#dwn_url = '/local/.../Taigi_Songs_21000/Taigi_songs_21000_urls_clean.csv'
+#dwn_url = '/home/martin/TG/scraping/Taigi_Songs_21000/Taigi_songs_21000_urls_clean.csv'
 
 df = pd.read_csv(dwn_url)
 #print(df.head(3))
@@ -33,8 +31,6 @@ df['URL'] = df['URL'].astype(str)
 df['Song'] = df['Song'].astype(str)
 df['Performer'] = df['Performer'].astype(str)
 
-
-#Parse singer and/or song titles from a NLP sentences
 #Parse singer and/or song titles from a NLP sentences
 
 def set_search_method(sentence):
@@ -91,13 +87,13 @@ def re_pattern_match( sentence ):
     #regulr expression patterns to filter keywords    
     patterns_list = [
         # the pattern with LESS placehoder should put in later position
-        # pattern 例 = '共我揣1條龍千玉ê珍惜' / '共我揣龍千玉ê歌'
+        # pattern 例 = '揣1條龍千玉ê珍惜' / '揣龍千玉ê歌'
         [ r'(?:予我|揣||我欲愛|我欲聽|)(\d+)(?:條|塊|首|tiâu|tè|siú|\s)(.*?)(?:ê|\s|个)(.*?)$', {'performer': 2, 'song': 3, 'required_qty': 1 }],  
-        # pattern 例 = '共我揣1條龍千玉' /  '共我揣1條珍惜'
+        # pattern 例 = '揣1條龍千玉' /  '揣1條珍惜'
         [ r'(?:予我|揣|我欲愛|我欲聽|)(\d+)(?:條|塊|首|tiâu|tè|siú|\s)(.*?)$', {'performer': 2, 'song': None, 'required_qty': 1 }], 
-        # pattern 例 = '共我揣龍千玉ê珍惜'
+        # pattern 例 = '揣龍千玉ê珍惜'
         [ r'(?:予我|揣|我欲愛|我欲聽|)(.*?)(?:ê|\s|个)(.*?)$', {'performer': 1, 'song': 2, 'required_qty': None }], 
-        # pattern 例 = '共我揣龍千玉' / '共我揣珍惜'
+        # pattern 例 = '揣龍千玉' / '揣珍惜'
         [ r'(?:予我|揣|我欲愛|我欲聽)(.*?)$', {'performer': 1, 'song': None, 'required_qty': None }],
         # pattern 例 = '歌名有珍惜'
         [ r'歌名(.*?)$', {'performer': None, 'song': 1, 'required_qty': None }],
@@ -116,7 +112,7 @@ def re_pattern_match( sentence ):
                 result['performer'] = match.group(mapping['performer'])   #{ 'performer': '', 'song': '', 'required_qty': ''}
         
             if mapping['song'] != None:
-                if match.group(mapping['song']) == '歌':
+                if match.group(mapping['song']) in ['歌', '台語歌', '臺語歌', '台灣歌', '臺灣歌', '台語歌曲', '臺語歌曲', '歌曲']:
                     result['song'] = ''
                 else:
                     result['song'] = match.group( mapping['song'] )
@@ -136,7 +132,7 @@ def re_pattern_match( sentence ):
     
     return result     #return a dictionary of re search result
 
-# fuzzy search with performer and/or song titles
+# exact/fuzzy/included search with performer and/or song titles
 
 def fuzzy_search_url( df, keywords ): 
     # keywords is dictionary, same as previous result
@@ -153,7 +149,7 @@ def fuzzy_search_url( df, keywords ):
 # ----------------------|-----------------
 #         Y             |        Y         | Exist
 #         Y             |        N         | Exist, performer or Song in the same placeholder   
-#         N             |        Y         | Not exist, parser would have set song = performer
+#         N             |        Y         | Exist
 #         N             |        N         | No match, return empty dataframe   
 
     if (keywords['performer']) == '' and (keywords['song']) == '':
@@ -170,7 +166,7 @@ def fuzzy_search_url( df, keywords ):
     #performer and Song share the same placeholder   
     if  ( keywords['performer'] ) != '' and ( keywords['song'] ) == '':
         if search_method == '包括':
-            #get rows exactly match performer
+            #get rows match performer
             search_performer = df[df['Performer'].str.contains( keywords['performer'], na=False)]
             if search_performer.empty:
                 print(f'No Performer {search_method} : ', keywords['performer'])
@@ -197,6 +193,7 @@ def fuzzy_search_url( df, keywords ):
                 else:
                     print(f'Song {search_method} match : ', keywords['performer'])
  
+    # both performaer and songs are not empty
     if  ( keywords['performer'] ) != '' and ( keywords['song'] ) != '':
 
         if search_method == '包括':
@@ -245,6 +242,30 @@ def fuzzy_search_url( df, keywords ):
                 else:
                     print(f'No performer and song {search_method} match : ', keywords['song'] + '   ' + keywords['performer'])
 
+    # performer is empty, song is not empty 
+    if  ( keywords['performer'] ) == '' and ( keywords['song'] ) != '':
+        if search_method == '包括':
+            #get rows match songs
+            search_song = df[df['Song'].str.contains(keywords['song'], na=False)]
+            if search_song.empty:
+                print(f'No Song {search_method} : ', keywords['song'])
+            else:
+                print(f'Song {search_method} : ', keywords['song'])
+        
+        elif search_method == '大略' or search_method == '齊仝':
+
+            if search_method == '大略':
+                fuzzy_threshold = 66
+
+            elif search_method == '齊仝':
+                fuzzy_threshold = 99
+
+            search_song = df[df['Song'].apply(lambda x: fuzz.ratio(x, keywords['song'])) > fuzzy_threshold]
+            if search_song.empty:
+                print(f'No Song {search_method} match : ', keywords['song'])
+            else:
+                print(f'Song {search_method} match : ', keywords['song'])
+
     #join two dataframes
     search_result = pd.concat([search_performer, search_song], ignore_index=True)
 
@@ -267,18 +288,16 @@ def fuzzy_search_url( df, keywords ):
 
     return search_result
 
-
-
 ############################################################################################
 ### Streamlit part
 ############################################################################################
 
-#@st.cache(allow_output_mutation=True)
-
-# Set Streamlit page configuration
+# Set help text
 
 def help_text():
-    text = '''      
+    text = '''  
+                    * 咱參考 ê 台語歌 有 21000 塊。
+    
                     * 若無講 beh 幾塊歌，預設揣 10 塊歌。（ 歌 ê 量詞用 塊／條／首 lóng 會用--tit。） 
                     
                     * 倒爿紅揤á 揤--loeh，進前 ê 物á 總á 總清挕捒。
@@ -312,7 +331,9 @@ def help_text():
                     用科技來耍台語，助台語。 '''
     return text
 
-st.set_page_config( page_title='揣台語歌／Chhōe Tâi-gí kóa', layout='centered' )
+# Set Streamlit page configuration
+
+st.set_page_config( page_title='揣台語歌／Chhōe Tâi-gí koa', layout='centered' )
 
 # Initialize session states
 if "generated" not in st.session_state:
@@ -341,26 +362,37 @@ def get_text():
     input_text = st.session_state["temp"]
     return input_text
 
-def Taigi_songs_search(input):
+def Taigi_songs_search(input,df=df):
     
     output_text = []
+    random_search_qty = 10     # default random search qty for random selection button 
 
     if  input.strip().lower() == 'help':
         output_text.append( help_text() )
         return output_text
+    
+    if input == 'random':
+        
+        df_result = df.sample(random_search_qty)
+        #append the result to a string
+        output_text.append( f'咱隨緣揣 {random_search_qty} 塊來聽看覓。。。' )
+        qty = random_search_qty
 
-    result = re_pattern_match( input )
-    df_result = fuzzy_search_url( df, result )
+    else:
+        output_text.append(f'咱欲揣 [ {input} ] \n' )
 
-    if df_result.empty:
-        #output_text.append('--------------------------------')
-        output_text.append('無揣--著-neh, 改--一下 koh 試看覓。')
-        return output_text
+        result = re_pattern_match( input )
+        df_result = fuzzy_search_url( df, result )
 
-    qty = len(df_result)
+        if df_result.empty:
 
-    #append the result to a string
-    output_text.append( f'-- 咱揣--tio̍h {qty} 塊來聽--1-ē, 無講幾塊 tio̍h 先 10 塊。' )
+            output_text.append('無揣--著-neh, 改--一下 koh 試看覓。')
+            return output_text
+
+        qty = len(df_result)
+
+        #append the result to a string
+        output_text.append( f'揣--tio̍h {qty} 塊來聽--1-ē, 無講幾塊 tio̍h 先 10 塊。' )
 
     idx = 0
 
@@ -377,26 +409,54 @@ def Taigi_songs_search(input):
 
         output_text.append( f'歌手 : {row["Performer"]}') 
         output_text.append( f'歌名 : {row["Song"]}')
-        output_text.append(f'網鍊 : {row["URL"]}')   
+        if row["URL"] == 'nan':
+            output_text.append( f'\n   網鍊 :  歹勢，資料內底無。')
+        else:
+            output_text.append( f'\n   網鍊 : {row["URL"]}')   
         idx += 1   
     
     return output_text  
 
-# Define function to search again
-#the funciton is still faulty now
-#def search_again():
+# Define function to search again with the last input again
+def search_again(df=df):
+    """
+    Define function to search again with the last input again
+    """    
+    output_area.empty()
 
-#    output = Taigi_songs_search(input=st.session_state["temp"])  
+    if len(st.session_state.past) == 0 :   
+        st.session_state.generated.append('無進前ê條件thang揣。。。')
+        clear_text()
+        return
 
-#    st.session_state.past.append(user_input)  
-#    st.session_state.generated.append(output)  
+    else: 
+        output = Taigi_songs_search( st.session_state["past"][-1], df=df) 
+    
+        st.session_state.generated.append(output)
 
-#    return
+    clear_text()
+ 
+    return
+
+# Define function to do random search
+def random_search(df=df): 
+    """
+    Define function to search again with the last input again
+    """   
+    output_area.empty()
+
+    output = Taigi_songs_search('random', df=df) 
+
+    st.session_state.generated.append(output)
+    
+    clear_text()
+    
+    return
 
 # Define function to clear output text
 def clear_output():
     """
-    Clears output text, but preserving the last one.
+    Clears all output text
     """    
     st.session_state["generated"] = []
     st.session_state["past"] = []
@@ -413,12 +473,6 @@ with st.sidebar:
     st.markdown('''這 ê Web App 資料 ùi chia 來--ê，感恩，咱搜揣 soah mā 是 koh 用網鍊 連--轉去看歌詞佮影片 
                 ==> [台語歌真正正字歌詞網](https://www.facebook.com/groups/922800454445724) ''')
  
-     #Add a button to search again with the same conditions
-     #the function is still faulty now
-#    st.sidebar.button("仝條件 hoh 揣--1-改", on_click = search_again, type='primary')
-
-    #Add a button to clear output
-    st.sidebar.button("清清--leh", on_click = clear_output, type='primary')
         
     st.markdown( '''* 拍 'help' 看 koh較 chē 說明 ''') 
     st.markdown( '''
@@ -439,11 +493,25 @@ with st.sidebar:
 # Set up the Streamlit app layout
 st.title("揣台語歌 ／ Chhōe Tâi-gí koa")
 #st.subheader("")
-st.write("Ùi chia 拍字↓↓↓")
-   
-#Add a button to start a new chat
-#st.sidebar.button("Koh 揣看覓", on_click = clear_search, type='primary')
 
+#setup buttons
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:    
+    st.write("Ùi 下跤這逝拍字 ↓↓↓")    
+
+with col2:
+    #Add a button to search again with the same conditions
+    st.button("仝條件 koh 1-改", on_click = search_again, help ='用頂táu 拍字 ê 仝條件 koh 揣 1-kái 看覓', type='secondary')
+
+with col3:
+    #Add a button to search random songs of default qty
+    st.button("隨緣揣 10 塊看覓", on_click = random_search, help ='Lóng 免拍字, 總á kā 你揣 10 塊看覓', type='secondary')    
+
+with col4:
+    #Add a button to clear output
+    st.button("總 kā 清清--leh", on_click = clear_output, help ='清 hō͘ 無 chhun 半項', type='secondary')
+   
 # Get the user input
 user_input = get_text()
 output_area = st.empty()
@@ -455,20 +523,15 @@ if user_input:
     st.session_state.past.append(user_input)  
     st.session_state.generated.append(output)  
 
-# Allow to download as well
-download_str = []
-
-# Display the serarch result, and allow the user to download it
-
+# Display the serarch result
 # Output the generated text
 with output_area.container():
     generated_text = ''
     for i in range(len(st.session_state['generated'])-1, -1, -1):
         for j in range(0, len(st.session_state["generated"][i])):
             generated_text += st.session_state["generated"][i][j] + '\n'
-            #download_str.append(st.session_state["generated"][i][j])
         generated_text += '\n'
-        #download_str.append('\n')
     st.write(generated_text)
+    #st.subheader(generated_text)
     
 # end of the code
