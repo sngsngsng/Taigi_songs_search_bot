@@ -22,8 +22,12 @@ dwn_url = 'https://drive.google.com/uc?id=' + file_id
 #df from local
 #dwn_url = '/home/martin/TG/scraping/Taigi_Songs_21000/Taigi_songs_21000_urls_clean.csv'
 
+# Set Streamlit page configuration
+
+st.set_page_config( page_title='揣台語歌／Chhōe Tâi-gí koa', layout='wide' )
+
 @st.cache_data
-def get_df()
+def get_df():
     df = pd.read_csv(dwn_url, engine='pyarrow')
     return df
 #print(df.head(3))
@@ -336,9 +340,6 @@ def help_text():
                     用科技來耍台語，助台語。 '''
     return text
 
-# Set Streamlit page configuration
-
-st.set_page_config( page_title='揣台語歌／Chhōe Tâi-gí koa', layout='centered' )
 
 # Initialize session states
 if "generated" not in st.session_state:
