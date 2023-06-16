@@ -22,8 +22,13 @@ dwn_url = 'https://drive.google.com/uc?id=' + file_id
 #df from local
 #dwn_url = '/home/martin/TG/scraping/Taigi_Songs_21000/Taigi_songs_21000_urls_clean.csv'
 
-df = pd.read_csv(dwn_url)
+@st.cache_data
+def get_df()
+    df = pd.read_csv(dwn_url, engine='pyarrow')
+    return df
 #print(df.head(3))
+
+df = get_df()
 
 #make URL	Song	Performer all string type
 #if using cleaned version, no need to convert to string
